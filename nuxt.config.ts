@@ -1,7 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
+  ssr: false,
   runtimeConfig: {
     public: {
       apiUrl: 'https://api.openweathermap.org',
@@ -10,5 +11,5 @@ export default defineNuxtConfig({
     }
   },
   css: ['assets/css/main.css'],
-  modules: ['@nuxt/icon', '@nuxt/ui']
+  modules: ['@nuxt/icon', '@nuxt/ui', '@vueuse/nuxt']
 })

@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-const {forecastWeather} = useWeather();
+const { forecastWeather } = useWeather();
 const hourlyItems = ref([]);
 
 watch(

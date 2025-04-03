@@ -7,6 +7,34 @@ export const useWeather = () => {
   const currentWeather = useState('currentWeather', () => null);
   const forecastWeather = useState('forecastWeather', () => []);
 
+  const getAirPollution = async(lat, lon) => {
+    try {
+      console.log('fetching AIR POLLUTION: ', `${apiUrl.value}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey.value}`);
+      const response = await $fetch(`${apiUrl.value}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey.value}`);
+      if (response) {
+        currentWeather.value = {
+          ...currentWeather.value,
+          airPollution: mapAqi(response.list[0].main.aqi)
+        };
+      }
+    } catch (error) {
+      console.error('[ERROR] getAirPollution: ', error);
+    }
+
+  }
+
+  function mapAqi(index) {
+    const levels = {
+      1: "Good",
+      2: "Fair",
+      3: "Moderate",
+      4: "Poor",
+      5: "Very Poor"
+    };
+
+    return levels[index];
+  }
+
   const getForecastWeather = async(lat, lon, unit) => {
     try {
       console.log('fetching FORECAST WEATHER: ', `${apiUrl.value}/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${apiKey.value}`);
@@ -119,6 +147,7 @@ export const useWeather = () => {
         };
       }
 
+      // MOCK DATA FOR TESTING
       // currentWeather.value = {
       //   rawIcon: '02n',
       //   weatherIcon: `${imgUrl.value}/02n@4x.png`,
@@ -133,19 +162,11 @@ export const useWeather = () => {
       //   windSpeed: 3.77,
       //   windDirection: windDirection(4.61)
       // };
+
+      await getAirPollution(lat, lon);
     } catch (error) {
       console.error('[ERROR] fetchCurrentWeather: ', error);
     }
-  }
-
-  function convertUnixToReadable(unixTimestamp) {
-      const date = new Date(unixTimestamp * 1000);
-      return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')} ` +
-           `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
-  }
-
-  function useCapitalize(value) {
-    return value.charAt(0).toUpperCase() + value.slice(1)
   }
 
   function windDirection(deg) {

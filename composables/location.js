@@ -1,10 +1,11 @@
-export const useLocation = () => {
+export const useLocations = () => {
 
   const runtimeConfig = useRuntimeConfig();
   const apiKey = useState('apiKey', () => runtimeConfig.public.apiKey);
   const apiUrl = useState('apiUrl', () => runtimeConfig.public.apiUrl);
   const wishlists = useState('wishlists', () => new Map());
   const currentLocation = useState('currentLocation', () => null);
+  const isFavouriteLocation = useState('isFavouriteLocation', () => false);
 
   const getGeoCoordinates = async(searchTerm) => {
     let fullPath = `${apiUrl.value}/geo/1.0`;
@@ -17,21 +18,18 @@ export const useLocation = () => {
     try {
       const response = await $fetch(fullPath);
       if (response) {
+        let coords = {}
         if (response[0]) {
-          currentLocation.value = {
-            name: response[0].name,
-            lat: response[0].lat,
-            lon: response[0].lon,
-            country: response[0].country
-          };
+          coords = {lat: response[0].lat, lon: response[0].lon};
         } else {
-          currentLocation.value = {
-            name: response.name,
-            lat: response.lat,
-            lon: response.lon,
-            country: response.country
-          };
+          coords = {lat: response.lat, lon: response.lon};
         }
+        const detailLocation = await getDetailLocation(coords.lat, coords.lon);
+        currentLocation.value = {
+          ...coords,
+          name: `${detailLocation?.address.city}, ${detailLocation?.address.country}`,
+          country: detailLocation?.address.country
+        };
       }
 
       // currentLocation.value = {
@@ -40,10 +38,8 @@ export const useLocation = () => {
       //   lon: '108.212',
       //   country: 'VN'
       // };
-      console.log('current location --> ', currentLocation.value)
     } catch (error) {
       console.error('[ERROR] getGeoCoordinates: ', error);
-      currentLocation.value = null;
     }
   }
 
@@ -52,11 +48,18 @@ export const useLocation = () => {
     if (storedValue) {
       wishlists.value = new Map(JSON.parse(storedValue));
     }
-    console.log(wishlists.value)
+  }
+
+  const checkFavouriteLocation = (location) => {
+    return wishlists.value.has(generateFavouriteLocationId(location))
+  }
+
+  function generateFavouriteLocationId(location) {
+    return `${location.lat}_${location.lon}`;
   }
 
   const toggleWishlist = (location) => {
-    const locationId = `${location.lat}_${location.lon}`;
+    const locationId = generateFavouriteLocationId(location);
     if (wishlists.value.has(locationId)) {
       wishlists.value.delete(locationId);
     } else {
@@ -67,10 +70,13 @@ export const useLocation = () => {
   }
 
   return {
+    apiKey,
     wishlists,
     currentLocation,
-    getGeoCoordinates,
     toggleWishlist,
-    loadWishlists
+    loadWishlists,
+    isFavouriteLocation,
+    getGeoCoordinates,
+    checkFavouriteLocation
   }
 }

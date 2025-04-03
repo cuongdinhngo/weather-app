@@ -1,150 +1,140 @@
 <template>
   <div class="header-container">
     <div class="location-header">
-      <button class="wishlist-star" @click="handleWishlist" v-if="currentLocation?.country">
-        <span class="star-icon active">★</span>
-      </button>
-      <h2 class="location-name">{{ currentLocation?.name || 'Loading ...' }}</h2>
+      <UIcon :name="isFavouriteLocation ? 'iconoir:star-solid' : 'iconoir:star'" :class="['size-9', {'text-amber-400': isFavouriteLocation}]" @click="handleWishlist" v-if="currentLocation?.country"/>
+      <h2 class="location-name" v-if="currentLocation">{{ currentLocation?.name }}</h2>
+      <USkeleton class="h-8 w-[200px]" v-else/>
     </div>
     <div class="temperature-toggle">
       <span class="unit" :class="{ active: !useFahrenheit }">°C</span>
-      <label class="switch">
-        <input type="checkbox" v-model="useFahrenheit" @click="switchUnit(!useFahrenheit)">
-        <span class="slider round"></span>
-      </label>
+      <USwitch v-model="useFahrenheit" @click="switchUnit()" style="background-color: #fff;"/>
       <span class="unit" :class="{ active: useFahrenheit }">°F</span>
     </div>
   </div>
 
   <div class="current-weather">
-      <div class="weather-icon">
-          <img id="weather-icon" :src="currentWeather?.weatherIcon" :alt="currentWeather?.main">
+      <div class="weather-icon" v-if="currentWeather">
+          <img id="weather-icon"  :src="currentWeather?.weatherIcon" :alt="currentWeather?.main">
       </div>
-      <div class="weather-info">
+      <USkeleton class="h-20 w-20 rounded-full" v-else/>
+      <div class="weather-info" v-if="currentWeather">
           <div id="location" class="location">Current weather</div>
-          <div id="temperature" class="temperature">{{ currentWeather?.temp}}°{{ currentUnit }}</div>
-          <div id="conditions" class="conditions">{{ currentWeather?.description || 'Loading ...'}}</div>
+          <div id="temperature" class="temperature">{{ currentWeather?.temp}}°{{ currentTempUnit }}</div>
+          <div id="conditions" class="conditions">Condition: {{ currentWeather?.description || 'Loading ...'}}</div>
+          <div id="conditions" class="conditions">Air Quality: {{ currentWeather?.airPollution || 'Loading ...'}}</div>
       </div>
+      <USkeleton class="h-20 w-50 rounded" v-else/>
   </div>
 
   <div class="weather-details">
-      <div class="detail-item">
-          <span>Humidity</span>
-          <span class="bold">{{ currentWeather?.humidity}}%</span>
+      <div class="detail-item" v-if="currentWeather">
+        <span>Humidity</span>
+        <span class="bold">{{ currentWeather?.humidity}}%</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Wind</span>
-          <span class="bold">{{ currentWeather?.windSpeed}} {{ currentUnit === 'C' ? 'meter/sec' : 'miles/hour' }}</span>
+          <span class="bold">{{ currentWeather?.windSpeed}} {{ currentTempUnit === 'C' ? 'meter/sec' : 'miles/hour' }}</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Pressure</span>
           <span class="bold">{{ currentWeather?.pressure}} hPa</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Feels Like</span>
-          <span class="bold">{{ currentWeather?.feelsLike}}°{{ currentUnit }}</span>
+          <span class="bold">{{ currentWeather?.feelsLike}}°{{ currentTempUnit }}</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Temperature</span>
-          <span class="bold">{{ currentWeather?.minTemp}}°{{ currentUnit }} - {{ currentWeather?.maxTemp}}°{{ currentUnit }}</span>
+          <span class="bold">{{ currentWeather?.minTemp}}°{{ currentTempUnit }} - {{ currentWeather?.maxTemp}}°{{ currentTempUnit }}</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Wind direction</span>
           <span class="bold">{{ currentWeather?.windDirection}}</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Visibility</span>
           <span class="bold">{{ currentWeather?.visibility}} meter</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Sun rise</span>
           <span class="bold">{{ currentWeather?.sunrise}}</span>
       </div>
-      <div class="detail-item">
+      <USkeleton class="h-20 w-60 rounded" v-else/>
+      
+      <div class="detail-item" v-if="currentWeather">
           <span>Sun set</span>
           <span class="bold">{{ currentWeather?.sunset}}</span>
       </div>
+      <USkeleton class="h-20 w-60 rounded" v-else/>
   </div>
 </template>
 
 <script setup>
+console.log('rendering Main >>>>');
 const { currentWeather, fetchCurrentWeather, forecastWeather, getForecastWeather} = useWeather();
-const { currentLocation, toggleWishlist } = useLocation();
+const { currentLocation, toggleWishlist, isFavouriteLocation, checkFavouriteLocation } = useLocations();
+const { coords } = useGeolocation();
+
 const useFahrenheit = ref(false);
-const currentUnit = ref('C');
-const currentLat = ref(null);
-const currentLon = ref(null);
+const currentTempUnit = ref('C');
+const currentUnitMeasurement = ref('metric');
 
 const handleWishlist = () => {
-  toggleWishlist(currentLocation.value)
+  toggleWishlist(currentLocation.value);
+  isFavouriteLocation.value = !isFavouriteLocation.value;
 }
 
-function updateCurrentUnit(newUnit) {
-  currentUnit.value = newUnit === 'metric' ? 'C' : 'F';
+function updateTempUnit(isImperial) {
+  currentTempUnit.value = isImperial ? 'F' : 'C';
+  currentUnitMeasurement.value = isImperial ? 'imperial' : 'metric';
 }
 
-const switchUnit = async(newUnit) => {
-  console.log('switching unit => ', newUnit ? 'F' : 'C');
+const switchUnit = async() => {
+  useFahrenheit.value = !useFahrenheit.value
   if (currentLocation.value?.lat && currentLocation.value?.lon) {
-    currentLocation.value.unit = newUnit ? 'imperial' : 'metric';
-    await fetchCurrentWeather(currentLocation.value.lat, currentLocation.value.lon, newUnit ? 'imperial' : 'metric');
-    updateCurrentUnit(newUnit ? 'imperial' : 'metric');
+    updateTempUnit(useFahrenheit.value);
+    await fetchCurrentWeather(currentLocation.value.lat, currentLocation.value.lon, currentUnitMeasurement.value);
+    await getForecastWeather(currentLocation.value.lat, currentLocation.value.lon, currentUnitMeasurement.value);
   }
 }
 
-function getCurrentCoordinates() {
-  let storedData = null;
-  if (localStorage.getItem('currentPlace')) {
-    storedData = JSON.parse(localStorage.getItem('currentPlace'))
-  }
-  if (navigator.geolocation) {
-    const now = Date.now();
-    if (null === storedData || storedData.ttl < now) {
-      navigator.geolocation.getCurrentPosition(
-          (position) => {
-            console.log('current position => ', position);
-            let currentPlace = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-              name: 'Weather in your current location',
-              ttl: Date.now() + 60 * 60 * 1000
-            };
-            localStorage.setItem('currentPlace', JSON.stringify(currentPlace));
-            currentLocation.value = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-              name: 'Weather in your current location'
-            }
-            console.log(`Latitude: ${currentLocation.value.lat}, Longitude: ${currentLocation.value.lon}`);
-          },
-          (error) => {
-              console.error("Error getting location:", error.message);
-          }
-      );
-    } else {
-      currentLocation.value = {
-        lat: storedData.lat,
-        lon: storedData.lon,
-        name: storedData.name
-      }
+watch(coords, async(newCoords) => {
+  if (newCoords?.latitude && newCoords?.longitude) {
+    const response = await getDetailLocation(newCoords.latitude, newCoords.longitude);
+    console.log('watching new coords :: ',newCoords.latitude, newCoords.longitude);
+    currentLocation.value = {
+      name: `${response?.address.city}, ${response?.address.country}`,
+      lat: newCoords.latitude,
+      lon: newCoords.longitude,
+      country: response?.address.country
     }
-  } else {
-      console.log("Geolocation is not supported by this browser.");
+    isFavouriteLocation.value = checkFavouriteLocation(currentLocation.value);
   }
-}
-
-onMounted(() => {
-  getCurrentCoordinates();
 });
 
 watch(
   () => currentLocation.value,
   async(newLocation) => {
     if (newLocation) {
-      console.log('watching ...', newLocation);
-      await fetchCurrentWeather(newLocation.lat, newLocation.lon, useFahrenheit.value ? 'imperial' : 'metric');
-      await getForecastWeather(newLocation.lat, newLocation.lon, useFahrenheit.value ? 'imperial' : 'metric');
-      updateCurrentUnit(useFahrenheit.value ? 'imperial' : 'metric');
+      console.log('watch fetching weather >>>>>', newLocation);
+      updateTempUnit(useFahrenheit.value);
+      await fetchCurrentWeather(newLocation.lat, newLocation.lon, currentUnitMeasurement.value);
+      await getForecastWeather(newLocation.lat, newLocation.lon, currentUnitMeasurement.value);
+      isFavouriteLocation.value = checkFavouriteLocation(currentLocation.value);
     }
   },
   { immediate: true }

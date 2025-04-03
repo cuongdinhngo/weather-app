@@ -1,7 +1,7 @@
 <template>
   <div class="wishlist-item">
     <span @click="getCurrentWeather" style="cursor: pointer;">{{ wishlist.name }}</span>
-    <button class="remove-btn" @click="removeWishlist(id)">Remove</button>
+    <UButton icon="fa-solid:trash-alt" size="md" color="error" variant="solid" @click="removeWishlist(id)" class="std-button"></UButton>
   </div>
 </template>
 
@@ -11,15 +11,14 @@ const props = defineProps({
   id: String
 });
 const { fetchCurrentWeather } = useWeather();
-const { toggleWishlist, currentLocation } = useLocation();
+const { toggleWishlist, currentLocation, isFavouriteLocation } = useLocations();
 
 const removeWishlist = (id) => {
-  console.log('remove => ', id)
   toggleWishlist(props.wishlist);
 }
 
 const getCurrentWeather = async() => {
-  console.log('getCurrentWeather => ', props.wishlist.lat, props.wishlist.lon, props.wishlist.unit);
   currentLocation.value = props.wishlist;
+  isFavouriteLocation.value = true;
 }
 </script>

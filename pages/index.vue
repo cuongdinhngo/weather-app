@@ -6,7 +6,10 @@
         <ContentDaily />
 
         <ContentHourly />
+
+        <ContentMap />
     </div>
+    
   </section>
 </template>
 
@@ -18,7 +21,7 @@ const weatherColors = {
   "Snow": "#F5F6F5",
   "Atmosphere": "#D3D3D3",
   "Clear": "#87CEEB",
-  "Clouds": "#808080"
+  "Clouds": "#d5cbcb"
 };
 const { currentWeather } = useWeather();
 const backgroundColor = ref('');

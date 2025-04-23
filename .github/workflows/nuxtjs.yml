@@ -17,6 +17,8 @@ jobs:
       # Pick your own package manager and build script
       - run: npm install
       - run: NUXT_APP_BASE_URL=/weather-app/ npx nuxt build --preset github_pages
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
